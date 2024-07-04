@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISRO Simulator App with 3D Airplane</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #scene-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+    }
+    .container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 300px;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1;
+    }
+    .header {
+      background-color: #0056b3;
+      color: #ffffff;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    .section h2 {
+      color: #0056b3;
+      border-bottom: 2px solid #0056b3;
+      padding-bottom: 5px;
+    }
+    .section p {
+      line-height: 1.6;
+    }
+    .controls {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f7f7f7;
+      border-radius: 4px;
+    }
+    .controls h3 {
+      color: #0056b3;
+      margin-bottom: 10px;
+    }
+    .controls button {
+      background-color: #0056b3;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      margin-right: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .controls button:hover {
+      background-color: #004799;
+    }
+    .contact-info {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f7f7f7;
+      border-radius: 4px;
+    }
+    .contact-info h3 {
+      color: #0056b3;
+      margin-bottom: 10px;
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="scene-container"></div>
+
+  <div class="container">
+    <div class="header">ISRO Simulator App with 3D Airplane</div>
+
+    <div class="section">
+      <h2>Mission Overview</h2>
+      <p>
+        Welcome to the ISRO Simulator Space!!!
+      </p>
+    </div>
+    <div class="chat-container">
+      <div class="chat-messages" id="chat-messages"></div>
+      <input type="text" id="chat-input" placeholder="Ask something...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+    
+
+    <div class="section">
+      <h2>Simulator Controls</h2>
+      <div class="controls" id="launchControls">
+        <h3>Launch Controls</h3>
+        <button onclick="launch()">Launch</button>
+        <button onclick="abort()">Abort</button>
+      </div>
+      <div class="controls" id="navigationControls">
+        <h3>Navigation</h3>
+        <button onclick="move('forward')">Forward</button>
+        <button onclick="move('backward')">Backward</button>
+        <button onclick="turn('left')">Turn Left</button>
+        <button onclick="turn('right')">Turn Right</button>
+      </div>
+    </div>
+
+    <div class="contact-info">
+      <h3>Contact Information</h3>
+      <p><strong>For support:</strong> Call +1 (123) 456-7890</p>
+      <p><strong>Email:</strong> support@ISROapp.com</p>
+    </div>
+
+  </div>
+
+  <audio id="backgroundMusic" src="/mnt/data/shabashiyan_title_song.mp3" loop></audio>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    let scene, camera, renderer, controls, airplane, airplaneMoving;
+
+    init();
+    animate();
+
+    function init() {
+      // Play background music
+      const backgroundMusic = document.getElementById('backgroundMusic');
+      backgroundMusic.play();
+
+      // Create scene
+      scene = new THREE.Scene();
+
+      // Create camera
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 5, 20);
+
+      // Create renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.getElementById('scene-container').appendChild(renderer.domElement);
+
+      // Create controls
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      // Create lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(10, 10, 10);
+      scene.add(directionalLight);
+
+      // Create airplane geometry
+      const airplaneGeometry = new THREE.BoxGeometry(2, 2, 5);
+      const airplaneMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+      airplane = new THREE.Mesh(airplaneGeometry, airplaneMaterial);
+      airplane.position.set(0, 0, 0); // Position the airplane in the center of the scene
+      scene.add(airplane);
+
+      // Add wings
+      const wingGeometry = new THREE.BoxGeometry(6, 0.5, 1);
+      const wingMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+      const wing1 = new THREE.Mesh(wingGeometry, wingMaterial);
+      wing1.position.set(0, 0, -1);
+      airplane.add(wing1);
+
+      const wing2 = new THREE.Mesh(wingGeometry, wingMaterial);
+      wing2.position.set(0, 0, 1);
+      airplane.add(wing2);
+
+      // Add tail
+      const tailGeometry = new THREE.BoxGeometry(1, 1, 2);
+      const tailMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });
+      const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+      tail.position.set(0, 1, -2.5);
+      airplane.add(tail);
+
+      // Window resize handling
+      window.addEventListener('resize', onWindowResize, false);
+
+      // Initialize airplane movement
+      airplaneMoving = false;
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (airplaneMoving) {
+        airplane.position.z -= 0.1; // Move forward
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    function launch() {
+      airplaneMoving = true;
+    }
+
+    function abort() {
+      airplaneMoving = false;
+    }
+
+    function move(direction) {
+      if (direction === 'forward') {
+        airplane.position.z -= 1; // Move forward
+      } else if (direction === 'backward') {
+        airplane.position.z += 1; // Move backward
+      }
+    }
+
+    function turn(direction) {
+      if (direction === 'left') {
+        airplane.rotation.y += Math.PI / 4; // Rotate left 45 degrees
+      } else if (direction === 'right') {
+        airplane.rotation.y -= Math.PI / 4; // Rotate right 45 degrees
+      }
+    }
+  </script>
+</body>
+</html>
